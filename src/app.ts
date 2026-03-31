@@ -15,9 +15,11 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// EJS template engine
+// EJS template engine — in dev __dirname=src/, in prod __dirname=dist/
+// Views are always in src/views (not compiled by tsc)
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+const viewsPath = path.join(__dirname, '..', 'src', 'views');
+app.set('views', viewsPath);
 
 // Static files (CSS, browser JS)
 app.use(express.static(path.join(__dirname, '..', 'public')));
