@@ -3,60 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tìm Kiếm Tên Miền</title>
+  <title>DomainSoft — Kiểm tra Tên miền</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <header>
-    <a href="/" class="logo">🔍 Tìm Kiếm Tên Miền</a>
+
+  <!-- Header -->
+  <header class="site-header">
+    <a href="/" class="logo">
+      <span class="logo-icon material-symbols-outlined">dns</span>
+      <span class="logo-text">DomainSoft</span>
+    </a>
   </header>
 
-  <main>
-    <section class="hero">
-      <h1>Kiểm tra tên miền của bạn</h1>
-      <p class="subtitle">Nhập tên miền để kiểm tra khả dụng và xem chi tiết đăng ký</p>
+  <main class="main-content">
 
-      <form id="search-form" class="search-box">
-        <input
-          type="text"
-          id="domain-input"
-          placeholder="Nhập tên miền (vd: mysite.com)"
-          autocomplete="off"
-          autofocus
-        >
-        <button type="submit" id="search-btn">Kiểm tra</button>
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1 class="hero-headline">Kiểm tra<br>Tên miền</h1>
+      <p class="hero-subtitle">Kiểm tra khả dụng và xem chi tiết đăng ký tên miền ngay lập tức</p>
+
+      <!-- Search Bar -->
+      <form id="search-form" class="search-form">
+        <div class="search-bar neumorphic-inset">
+          <span class="search-icon material-symbols-outlined">search</span>
+          <input
+            type="text"
+            id="domain-input"
+            class="search-input"
+            placeholder="Nhập tên miền (vd: mysite.com)"
+            autocomplete="off"
+            autofocus
+          >
+          <button type="submit" id="search-btn" class="search-btn neumorphic-raised">
+            Kiểm tra
+          </button>
+        </div>
       </form>
+
+      <!-- Popular TLD Chips -->
+      <div class="tld-chips">
+        <span class="tld-label">Phổ biến:</span>
+        <button type="button" class="tld-chip neumorphic-raised" data-tld=".com">.com</button>
+        <button type="button" class="tld-chip neumorphic-raised" data-tld=".vn">.vn</button>
+        <button type="button" class="tld-chip neumorphic-raised" data-tld=".net">.net</button>
+        <button type="button" class="tld-chip neumorphic-raised" data-tld=".org">.org</button>
+      </div>
     </section>
 
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      <p>Đang kiểm tra tên miền...</p>
+    <!-- Loading State -->
+    <div id="loading" class="loading-state hidden">
+      <div class="spinner-wrap neumorphic-raised">
+        <div class="spinner"></div>
+      </div>
+      <p class="loading-text">Đang kiểm tra tên miền...</p>
     </div>
 
-    <div id="error" class="error-box hidden"></div>
+    <!-- Error State -->
+    <div id="error" class="error-box hidden">
+      <span class="material-symbols-outlined error-icon">error</span>
+      <span id="error-message"></span>
+    </div>
 
-    <div id="results" class="results hidden">
-      <!-- Availability badge -->
-      <div id="availability" class="availability-card"></div>
+    <!-- Results Section -->
+    <div id="results" class="results-section hidden">
 
-      <!-- Registration details (shown for taken domains) -->
-      <div id="details" class="details-card hidden">
-        <h3>📋 Chi tiết Đăng ký</h3>
-        <table id="details-table">
-          <tbody></tbody>
-        </table>
+      <!-- Availability Card -->
+      <div id="availability" class="availability-card neumorphic-raised"></div>
+
+      <!-- Registration Details Panel (for taken domains) -->
+      <div id="details" class="details-panel hidden">
+        <h2 class="panel-title">
+          <span class="material-symbols-outlined">assignment</span>
+          Chi tiết Đăng ký
+        </h2>
+        <div class="details-grid" id="details-grid"></div>
       </div>
 
-      <!-- Suggestions (shown for taken domains) -->
+      <!-- Suggestions Section (two-column layout) -->
       <div id="suggestions" class="suggestions-section hidden">
-        <h3>💡 Gợi ý Thay thế</h3>
-        <div id="suggestions-grid" class="suggestions-grid"></div>
+        <h2 class="panel-title">
+          <span class="material-symbols-outlined">lightbulb</span>
+          Gợi ý Thay thế
+        </h2>
+        <div class="suggestions-columns">
+          <!-- TLD Alternatives -->
+          <div class="suggestions-col">
+            <h3 class="col-heading">Phần mở rộng khác (TLDs)</h3>
+            <div id="tld-suggestions" class="suggestions-list"></div>
+          </div>
+          <!-- Keyword Suggestions -->
+          <div class="suggestions-col">
+            <h3 class="col-heading">Gợi ý từ khóa</h3>
+            <div id="keyword-suggestions" class="suggestions-list"></div>
+          </div>
+        </div>
       </div>
+
     </div>
+    <!-- /#results -->
+
   </main>
 
-  <footer>
-    <p>Domain Search Tool &copy; 2026 — Dữ liệu từ RDAP/WHOIS</p>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p class="footer-brand">DomainSoft &copy; 2026</p>
+    <nav class="footer-links">
+      <a href="#" class="footer-link">Chính sách Bảo mật</a>
+      <a href="#" class="footer-link">Điều khoản Dịch vụ</a>
+      <a href="#" class="footer-link">Hỗ trợ</a>
+    </nav>
+    <p class="footer-note">Dữ liệu từ RDAP / WHOIS</p>
   </footer>
 
   <script src="/js/search.js" defer></script>
