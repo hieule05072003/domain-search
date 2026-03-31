@@ -13,12 +13,25 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.ts"],
+    "testMatch": [
+      "**/tests/**/*.test.ts"
+    ],
     "forceExit": true,
     "detectOpenHandles": true,
     "transform": {
-      "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }],
-      "^.+\\.m?js$": ["ts-jest", { "tsconfig": "tsconfig.test.json", "useESM": false }]
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json"
+        }
+      ],
+      "^.+\\.m?js$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json",
+          "useESM": false
+        }
+      ]
     },
     "transformIgnorePatterns": [
       "node_modules/(?!(whoiser|axios)/)"
@@ -48,6 +61,6 @@
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^5.9.3"
   }
 }
