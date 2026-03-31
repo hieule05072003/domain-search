@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tìm Kiếm Tên Miền</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="logo">🔍 Tìm Kiếm Tên Miền</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Kiểm tra tên miền của bạn</h1>
+      <p class="subtitle">Nhập tên miền để kiểm tra khả dụng và xem chi tiết đăng ký</p>
+
+      <form id="search-form" class="search-box">
+        <input
+          type="text"
+          id="domain-input"
+          placeholder="Nhập tên miền (vd: mysite.com)"
+          autocomplete="off"
+          autofocus
+        >
+        <button type="submit" id="search-btn">Kiểm tra</button>
+      </form>
+    </section>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>Đang kiểm tra tên miền...</p>
+    </div>
+
+    <div id="error" class="error-box hidden"></div>
+
+    <div id="results" class="results hidden">
+      <!-- Availability badge -->
+      <div id="availability" class="availability-card"></div>
+
+      <!-- Registration details (shown for taken domains) -->
+      <div id="details" class="details-card hidden">
+        <h3>📋 Chi tiết Đăng ký</h3>
+        <table id="details-table">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Suggestions (shown for taken domains) -->
+      <div id="suggestions" class="suggestions-section hidden">
+        <h3>💡 Gợi ý Thay thế</h3>
+        <div id="suggestions-grid" class="suggestions-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Domain Search Tool &copy; 2026 — Dữ liệu từ RDAP/WHOIS</p>
+  </footer>
+
+  <script src="/js/search.js" defer></script>
+</body>
+</html>

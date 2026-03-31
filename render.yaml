@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: domain-search
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_URL
+        sync: false
