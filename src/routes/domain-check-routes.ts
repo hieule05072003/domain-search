@@ -60,4 +60,17 @@ router.get('/api/suggest', async (req: Request, res: Response) => {
   }
 });
 
+/** Static pages */
+router.get('/privacy', (_req: Request, res: Response) => {
+  res.render('privacy');
+});
+
+router.get('/terms', (_req: Request, res: Response) => {
+  res.render('terms');
+});
+
+router.get('/support', (_req: Request, res: Response) => {
+  res.render('support');
+});
+
 export default router;

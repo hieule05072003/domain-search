@@ -244,3 +244,161 @@ body {
   .search-input { width: 100%; order: 2; }
   .search-btn { width: 100%; order: 3; text-align: center; }
 }
+
+/* --- Static Pages (privacy, terms, support) --------------- */
+.page-hero {
+  text-align: center;
+  padding: 2.5rem 0 2rem;
+}
+.page-hero h1 {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+}
+.page-hero .page-subtitle {
+  font-size: 1rem;
+  color: var(--on-dim);
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+.page-content .content-section {
+  border-radius: var(--r-lg);
+  padding: 1.8rem 2rem;
+  box-shadow: var(--raised);
+  background: var(--surface);
+}
+.page-content h2 {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primary);
+  margin-bottom: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.page-content h2 .material-symbols-outlined {
+  font-size: 1.2rem;
+  color: var(--secondary);
+}
+.page-content p {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--on-surface);
+  margin-bottom: 0.6rem;
+}
+.page-content p:last-child { margin-bottom: 0; }
+.page-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.page-content ul li {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--on-surface);
+  padding-left: 1.2rem;
+  position: relative;
+}
+.page-content ul li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: 700;
+}
+.page-content .effective-date {
+  font-size: 0.82rem;
+  color: var(--on-dim);
+  font-style: italic;
+  margin-top: 0.3rem;
+}
+
+/* FAQ items */
+.faq-item {
+  box-shadow: var(--inset);
+  border-radius: var(--r-md);
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.75rem;
+}
+.faq-item:last-child { margin-bottom: 0; }
+.faq-question {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--on-surface);
+  margin-bottom: 0.45rem;
+}
+.faq-answer {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--on-dim);
+  margin: 0 !important;
+}
+
+/* Contact card */
+.contact-card {
+  border-radius: var(--r-lg);
+  padding: 1.8rem 2rem;
+  box-shadow: var(--raised);
+  background: var(--surface);
+  text-align: center;
+}
+.contact-card .contact-icon {
+  font-size: 2.5rem;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 0.75rem;
+}
+.contact-card h2 {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  color: var(--on-surface);
+}
+.contact-card p {
+  font-size: 0.95rem;
+  color: var(--on-dim);
+  line-height: 1.65;
+  margin-bottom: 0.4rem;
+}
+.contact-card p:last-child { margin-bottom: 0; }
+.contact-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color var(--t);
+}
+.contact-email:hover { color: var(--on-surface); }
+.contact-email .material-symbols-outlined { font-size: 1.1rem; }
+
+.back-link-wrap { text-align: center; padding: 0.5rem 0 1.5rem; }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: color var(--t);
+}
+.back-link:hover { color: var(--primary); }
+.back-link .material-symbols-outlined { font-size: 1.1rem; }
