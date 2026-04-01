@@ -123,7 +123,7 @@ async function tryRdap(
       : `${serverBase}/domain/${domain}`;
 
     const response = await axios.get(url, {
-      timeout: 5000,
+      timeout: 10000,
       validateStatus: () => true, // Accept all HTTP status codes
     });
 
@@ -184,7 +184,7 @@ async function tryWhois(
   domain: string
 ): Promise<DomainLookupResult | null> {
   try {
-    const whoisData = await whoisDomain(domain, { timeout: 5000 });
+    const whoisData = await whoisDomain(domain, { timeout: 10000 });
 
     // whoiser returns object keyed by WHOIS server
     const serverKeys = Object.keys(whoisData);
@@ -255,7 +255,41 @@ async function tryWhois(
 }
 
 /**
- * Main domain lookup — tries RDAP first, falls back to WHOIS.
+ * DNS-based availability check — last resort fallback.
+ * If domain resolves (has A/AAAA records), it's likely registered.
+ * If NXDOMAIN, it might be available (not 100% reliable but better than nothing).
+ */
+async function tryDns(domain: string): Promise<DomainLookupResult | null> {
+  const dns = await import('dns');
+  return new Promise((resolve) => {
+    dns.resolve4(domain, (err) => {
+      if (err && err.code === 'ENOTFOUND') {
+        // No DNS records — likely available (but not guaranteed)
+        resolve({
+          domain,
+          available: true,
+          method: 'unknown' as const,
+          cached: false,
+          details: emptyDetails(),
+        });
+      } else if (!err) {
+        // DNS resolves — domain is registered
+        resolve({
+          domain,
+          available: false,
+          method: 'unknown' as const,
+          cached: false,
+          details: emptyDetails(),
+        });
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+/**
+ * Main domain lookup — tries RDAP first, then WHOIS, then DNS.
  * Returns availability + registration details in a single call.
  */
 export async function lookupDomain(
@@ -271,13 +305,17 @@ export async function lookupDomain(
   const whoisResult = await tryWhois(domain);
   if (whoisResult) return whoisResult;
 
-  // Both methods failed
+  // Last resort: DNS check (no registration details, just availability heuristic)
+  const dnsResult = await tryDns(domain);
+  if (dnsResult) return dnsResult;
+
+  // All methods failed
   return {
     domain,
     available: false,
     method: 'unknown',
     cached: false,
     details: emptyDetails(),
-    error: 'All lookup methods failed',
+    error: 'Không thể kiểm tra tên miền này. Vui lòng thử lại sau.',
   };
 }
