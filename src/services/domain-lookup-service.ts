@@ -257,23 +257,18 @@ async function tryWhois(
 /**
  * DNS-based availability check — last resort fallback.
  * If domain resolves (has A/AAAA records), it's likely registered.
- * If NXDOMAIN, it might be available (not 100% reliable but better than nothing).
+ * If NXDOMAIN/ENOTFOUND, it might be available.
+ * 5s timeout to avoid hanging.
  */
 async function tryDns(domain: string): Promise<DomainLookupResult | null> {
   const dns = await import('dns');
   return new Promise((resolve) => {
-    dns.resolve4(domain, (err) => {
-      if (err && err.code === 'ENOTFOUND') {
-        // No DNS records — likely available (but not guaranteed)
-        resolve({
-          domain,
-          available: true,
-          method: 'unknown' as const,
-          cached: false,
-          details: emptyDetails(),
-        });
-      } else if (!err) {
-        // DNS resolves — domain is registered
+    const timer = setTimeout(() => resolve(null), 5000);
+
+    // Try both A and NS records — NS is more reliable for domain existence
+    dns.resolveNs(domain, (nsErr, nsAddresses) => {
+      if (!nsErr && nsAddresses && nsAddresses.length > 0) {
+        clearTimeout(timer);
         resolve({
           domain,
           available: false,
@@ -281,9 +276,32 @@ async function tryDns(domain: string): Promise<DomainLookupResult | null> {
           cached: false,
           details: emptyDetails(),
         });
-      } else {
-        resolve(null);
+        return;
       }
+
+      // NS failed — try A records
+      dns.resolve4(domain, (err) => {
+        clearTimeout(timer);
+        if (err && (err.code === 'ENOTFOUND' || err.code === 'ENODATA' || err.code === 'ESERVFAIL')) {
+          resolve({
+            domain,
+            available: true,
+            method: 'unknown' as const,
+            cached: false,
+            details: emptyDetails(),
+          });
+        } else if (!err) {
+          resolve({
+            domain,
+            available: false,
+            method: 'unknown' as const,
+            cached: false,
+            details: emptyDetails(),
+          });
+        } else {
+          resolve(null);
+        }
+      });
     });
   });
 }
