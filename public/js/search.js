@@ -13,6 +13,8 @@
   const availability      = document.getElementById('availability');
   const details           = document.getElementById('details');
   const detailsGrid       = document.getElementById('details-grid');
+  const pricingCard       = document.getElementById('pricing');
+  const pricingTableWrap  = document.getElementById('pricing-table-wrap');
   const suggestionsSection= document.getElementById('suggestions');
   const tldSuggestions    = document.getElementById('tld-suggestions');
   const keywordSuggestions= document.getElementById('keyword-suggestions');
@@ -62,6 +64,10 @@
         renderDetails(checkData.details);
       }
 
+      // Fetch pricing for the searched TLD + common TLDs (fire-and-forget)
+      var searchedTld = domain.includes('.') ? domain.split('.').pop() : 'com';
+      fetchPricing(searchedTld);
+
       if (!checkData.available) {
         fetchSuggestions(domain);
       }
@@ -78,9 +84,11 @@
     errorBox.classList.add('hidden');
     results.classList.add('hidden');
     details.classList.add('hidden');
+    pricingCard.classList.add('hidden');
     suggestionsSection.classList.add('hidden');
     availability.innerHTML = '';
     detailsGrid.innerHTML = '';
+    pricingTableWrap.innerHTML = '';
     tldSuggestions.innerHTML = '';
     keywordSuggestions.innerHTML = '';
   }
@@ -149,6 +157,52 @@
         '<div class="detail-value">' + escapeHtml(value) + '</div>' +
       '</div>'
     );
+  }
+
+  // --- Fetch and render pricing reference card ---
+  async function fetchPricing(searchedTld) {
+    // Always include common TLDs; prepend the searched TLD so it appears first
+    var commonTlds = ['com', 'net', 'org', 'io', 'dev', 'vn'];
+    var tldList = [searchedTld].concat(
+      commonTlds.filter(function (t) { return t !== searchedTld; })
+    );
+
+    try {
+      var res = await fetch('/api/pricing?tlds=' + encodeURIComponent(tldList.join(',')));
+      if (!res.ok) return;
+      var data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return;
+      renderPricingCard(data);
+    } catch (err) {
+      // Pricing is non-critical — silently hide the section on error
+    }
+  }
+
+  // --- Build pricing table HTML and show the card ---
+  function renderPricingCard(items) {
+    var rows = items.map(function (item) {
+      return (
+        '<tr>' +
+          '<td class="pricing-tld">' + escapeHtml(item.tld) + '</td>' +
+          '<td>' + escapeHtml(item.registerDisplay) + '/năm</td>' +
+          '<td>' + escapeHtml(item.renewDisplay) + '/năm</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    pricingTableWrap.innerHTML =
+      '<table class="pricing-table">' +
+        '<thead>' +
+          '<tr>' +
+            '<th>TLD</th>' +
+            '<th>Đăng ký</th>' +
+            '<th>Gia hạn</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+
+    pricingCard.classList.remove('hidden');
   }
 
   // --- Fetch and render suggestions ---

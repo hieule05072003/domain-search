@@ -224,6 +224,57 @@ body {
 .mini-badge.unknown   { background: var(--secondary); }
 .suggestions-placeholder { color: var(--on-dim); font-size: 0.9rem; padding: 0.5rem 0; }
 
+/* --- Pricing Reference Card ------------------------------- */
+.pricing-card {
+  border-radius: var(--r-lg);
+  padding: 1.8rem;
+  margin: 1rem 0;
+  box-shadow: var(--raised);
+  background: var(--surface);
+}
+
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  margin-top: 0.6rem;
+}
+.pricing-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--on-dim);
+  padding: 0.5rem 0.75rem 0.6rem;
+}
+.pricing-table td {
+  padding: 0.55rem 0.75rem;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+.pricing-table .pricing-tld {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+/* Alternating inset rows */
+.pricing-table tbody tr:nth-child(odd) td {
+  background: rgba(163,177,198,0.13);
+  border-radius: var(--r-md);
+}
+.pricing-table tbody tr:first-child td:first-child { border-radius: var(--r-md) 0 0 var(--r-md); }
+.pricing-table tbody tr:first-child td:last-child  { border-radius: 0 var(--r-md) var(--r-md) 0; }
+
+.pricing-disclaimer {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--on-dim);
+  opacity: 0.75;
+  line-height: 1.55;
+}
+
 /* --- Footer ----------------------------------------------- */
 .site-footer { text-align: center; padding: 2rem 1.5rem; color: var(--on-dim); font-size: 0.82rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .footer-brand { font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--on-surface); }

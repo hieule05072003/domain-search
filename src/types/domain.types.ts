@@ -35,3 +35,12 @@ export interface DomainValidation {
   isValid: boolean;
   error?: string;
 }
+
+/** Reference pricing for a single TLD (Cloudflare at-cost, converted to VND) */
+export interface PricingResult {
+  tld: string;               // e.g. ".com"
+  registerPriceVND: number;  // raw VND amount
+  renewPriceVND: number;     // raw VND amount
+  registerDisplay: string;   // formatted e.g. "250.000 ₫"
+  renewDisplay: string;      // formatted e.g. "250.000 ₫"
+}

@@ -27,9 +27,10 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Rate limiting on API routes — 10 req/min per IP
 app.use('/api', apiRateLimiter);
 
-// Cache middleware — lookup: 24h, suggestions: 48h
+// Cache middleware — lookup: 24h, suggestions: 48h, pricing: 12h
 app.use('/api/check', cacheMiddleware('lookup', 86400));
 app.use('/api/suggest', cacheMiddleware('suggest', 172800));
+app.use('/api/pricing', cacheMiddleware('pricing', 43200));
 
 // Routes
 app.use('/', domainCheckRoutes);

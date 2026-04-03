@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { validateDomain } from '../utils/domain-validator';
 import { lookupDomain } from '../services/domain-lookup-service';
 import { getSuggestions } from '../services/suggestion-service';
+import { getPricing } from '../services/pricing-service';
 
 const router = Router();
 
@@ -57,6 +58,26 @@ router.get('/api/suggest', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('[/api/suggest] Error:', err.message);
     res.status(500).json({ error: 'Suggestions failed', details: err.message });
+  }
+});
+
+/** Domain pricing reference — GET /api/pricing?tlds=com,net,org */
+router.get('/api/pricing', async (req: Request, res: Response) => {
+  const raw = (req.query.tlds as string) || '';
+  if (!raw.trim()) {
+    res.status(400).json({ error: 'Missing tlds parameter' });
+    return;
+  }
+
+  const tlds = raw.split(',').map((t) => t.trim()).filter(Boolean);
+
+  try {
+    const results = await getPricing(tlds);
+    res.json(results);
+  } catch (err: any) {
+    // Pricing service errors are non-critical — return empty array
+    console.error('[/api/pricing] Error:', err.message);
+    res.json([]);
   }
 });
 
