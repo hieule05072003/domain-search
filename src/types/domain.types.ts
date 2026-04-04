@@ -2,7 +2,7 @@
 export interface DomainLookupResult {
   domain: string;
   available: boolean;
-  method: 'rdap' | 'whois' | 'unknown';
+  method: 'rdap' | 'unknown';
   cached: boolean;
   details: {
     registrar: string | null;

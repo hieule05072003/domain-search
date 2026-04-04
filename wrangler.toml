@@ -1,0 +1,10 @@
+name = "domainsoft"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./public"
+
+# KV namespace for caching — create via: npx wrangler kv namespace create CACHE
+# Then replace the id below with the actual ID
+[[kv_namespaces]]
+binding = "CACHE"
+id = "926e3d21c53f4a38a887d0add15a076d"

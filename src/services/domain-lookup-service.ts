@@ -1,5 +1,7 @@
-import axios from 'axios';
-import { whoisDomain } from 'whoiser';
+/**
+ * Domain lookup service — RDAP-only (CF Workers compatible).
+ * Uses native fetch() instead of axios. No WHOIS/DNS fallback.
+ */
 import { DomainLookupResult } from '../types/domain.types';
 
 /** Hardcoded RDAP servers for top TLDs — avoids IANA bootstrap round-trip */
@@ -21,7 +23,7 @@ const RDAP_SERVERS: Record<string, string> = {
 /** IANA bootstrap cache — refreshed every 24h */
 let bootstrapCache: Record<string, string> = {};
 let bootstrapLastFetch = 0;
-const BOOTSTRAP_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const BOOTSTRAP_TTL = 24 * 60 * 60 * 1000;
 
 /** Build empty details object */
 function emptyDetails(): DomainLookupResult['details'] {
@@ -44,10 +46,16 @@ async function getBootstrapServer(tld: string): Promise<string | null> {
 
   if (now - bootstrapLastFetch > BOOTSTRAP_TTL || !bootstrapCache[tld]) {
     try {
-      const res = await axios.get('https://data.iana.org/rdap/domain.json', {
-        timeout: 5000,
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch('https://data.iana.org/rdap/domain.json', {
+        signal: controller.signal,
       });
-      const services: [string[], string[]][] = res.data?.services || [];
+      clearTimeout(timer);
+
+      const data = (await res.json()) as { services?: [string[], string[]][] };
+      const services = data?.services || [];
 
       bootstrapCache = {};
       for (const [tlds, servers] of services) {
@@ -57,7 +65,6 @@ async function getBootstrapServer(tld: string): Promise<string | null> {
       }
       bootstrapLastFetch = now;
     } catch {
-      // Bootstrap fetch failed — return null, caller falls back to WHOIS
       return null;
     }
   }
@@ -65,17 +72,13 @@ async function getBootstrapServer(tld: string): Promise<string | null> {
   return bootstrapCache[tld] || null;
 }
 
-/**
- * Extract registrar name from RDAP entities array.
- * Looks for entity with role "registrar".
- */
+/** Extract registrar name from RDAP entities array */
 function extractRegistrar(entities: any[]): string | null {
   if (!Array.isArray(entities)) return null;
 
   for (const entity of entities) {
     const roles: string[] = entity.roles || [];
     if (roles.includes('registrar')) {
-      // Try vcardArray first, then publicIds, then handle/fn
       const vcard = entity.vcardArray?.[1];
       if (vcard) {
         const fnEntry = vcard.find((v: any[]) => v[0] === 'fn');
@@ -90,10 +93,7 @@ function extractRegistrar(entities: any[]): string | null {
   return null;
 }
 
-/**
- * Extract date from RDAP events array by action type.
- * Common actions: "registration", "expiration", "last changed"
- */
+/** Extract date from RDAP events array by action type */
 function extractEventDate(events: any[], action: string): string | null {
   if (!Array.isArray(events)) return null;
   const event = events.find((e: any) => e.eventAction === action);
@@ -101,20 +101,19 @@ function extractEventDate(events: any[], action: string): string | null {
 }
 
 /**
- * Try RDAP lookup — primary method.
- * HTTP 200 = taken (parse details), HTTP 404 = available, error = null (trigger fallback)
+ * Try RDAP lookup — primary (and only) method.
+ * HTTP 200 = taken (parse details), HTTP 404 = available, error = null (unsupported)
  */
 async function tryRdap(
   domain: string,
   tld: string
 ): Promise<DomainLookupResult | null> {
   try {
-    // Find RDAP server: hardcoded map first, then IANA bootstrap
     let serverBase = RDAP_SERVERS[tld];
 
     if (!serverBase) {
       const bootstrapUrl = await getBootstrapServer(tld);
-      if (!bootstrapUrl) return null; // No RDAP server found — fallback to WHOIS
+      if (!bootstrapUrl) return null;
       serverBase = `${bootstrapUrl.replace(/\/$/, '')}/domain`;
     }
 
@@ -122,12 +121,12 @@ async function tryRdap(
       ? `${serverBase}/${domain}`
       : `${serverBase}/domain/${domain}`;
 
-    const response = await axios.get(url, {
-      timeout: 10000,
-      validateStatus: () => true, // Accept all HTTP status codes
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
 
-    // HTTP 404 = domain not in registry = available
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+
     if (response.status === 404) {
       return {
         domain,
@@ -138,9 +137,8 @@ async function tryRdap(
       };
     }
 
-    // HTTP 200 = domain is registered
-    if (response.status === 200 && response.data) {
-      const data = response.data;
+    if (response.ok) {
+      const data = (await response.json()) as any;
 
       const nameservers: string[] = Array.isArray(data.nameservers)
         ? data.nameservers
@@ -148,9 +146,7 @@ async function tryRdap(
             .filter(Boolean)
         : [];
 
-      const status: string[] = Array.isArray(data.status)
-        ? data.status
-        : [];
+      const status: string[] = Array.isArray(data.status) ? data.status : [];
 
       return {
         domain,
@@ -168,172 +164,31 @@ async function tryRdap(
       };
     }
 
-    // Other HTTP status (e.g., 400, 500) — return null to trigger fallback
     return null;
-  } catch {
-    // Network error, timeout, etc. — return null to trigger WHOIS fallback
-    return null;
-  }
-}
-
-/**
- * Try WHOIS lookup via whoiser — fallback for ccTLDs without RDAP.
- * Empty object = available, populated = taken.
- */
-async function tryWhois(
-  domain: string
-): Promise<DomainLookupResult | null> {
-  try {
-    const whoisData = await whoisDomain(domain, { timeout: 10000 });
-
-    // whoiser returns object keyed by WHOIS server
-    const serverKeys = Object.keys(whoisData);
-    if (serverKeys.length === 0) {
-      // Empty result = domain likely available
-      return {
-        domain,
-        available: true,
-        method: 'whois',
-        cached: false,
-        details: emptyDetails(),
-      };
-    }
-
-    // Get data from first WHOIS server response
-    const data: any = whoisData[serverKeys[0]];
-
-    // Check for "not found" indicators
-    const domainName = data['Domain Name'] || data['domain name'] || '';
-    if (!domainName && !data['Registrar']) {
-      return {
-        domain,
-        available: true,
-        method: 'whois',
-        cached: false,
-        details: emptyDetails(),
-      };
-    }
-
-    // Domain is registered — extract details
-    const nameservers: string[] = [];
-    const nsField = data['Name Server'] || data['nserver'] || data['Nameservers'];
-    if (Array.isArray(nsField)) {
-      nameservers.push(...nsField.map((ns: string) => ns.toLowerCase()));
-    } else if (typeof nsField === 'string') {
-      nameservers.push(nsField.toLowerCase());
-    }
-
-    const status: string[] = [];
-    const statusField = data['Domain Status'] || data['Status'];
-    if (Array.isArray(statusField)) {
-      status.push(...statusField);
-    } else if (typeof statusField === 'string') {
-      status.push(statusField);
-    }
-
-    return {
-      domain,
-      available: false,
-      method: 'whois',
-      cached: false,
-      details: {
-        registrar: data['Registrar'] || data['registrar'] || null,
-        createdDate: data['Created Date'] || data['Creation Date'] || null,
-        expiryDate:
-          data['Registry Expiry Date'] ||
-          data['Expiry Date'] ||
-          data['Expiration Date'] ||
-          null,
-        updatedDate: data['Updated Date'] || null,
-        nameservers,
-        status,
-      },
-    };
   } catch {
     return null;
   }
 }
 
 /**
- * DNS-based availability check — last resort fallback.
- * If domain resolves (has A/AAAA records), it's likely registered.
- * If NXDOMAIN/ENOTFOUND, it might be available.
- * 5s timeout to avoid hanging.
- */
-async function tryDns(domain: string): Promise<DomainLookupResult | null> {
-  const dns = await import('dns');
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(null), 5000);
-
-    // Try both A and NS records — NS is more reliable for domain existence
-    dns.resolveNs(domain, (nsErr, nsAddresses) => {
-      if (!nsErr && nsAddresses && nsAddresses.length > 0) {
-        clearTimeout(timer);
-        resolve({
-          domain,
-          available: false,
-          method: 'unknown' as const,
-          cached: false,
-          details: emptyDetails(),
-        });
-        return;
-      }
-
-      // NS failed — try A records
-      dns.resolve4(domain, (err) => {
-        clearTimeout(timer);
-        if (err && (err.code === 'ENOTFOUND' || err.code === 'ENODATA' || err.code === 'ESERVFAIL')) {
-          resolve({
-            domain,
-            available: true,
-            method: 'unknown' as const,
-            cached: false,
-            details: emptyDetails(),
-          });
-        } else if (!err) {
-          resolve({
-            domain,
-            available: false,
-            method: 'unknown' as const,
-            cached: false,
-            details: emptyDetails(),
-          });
-        } else {
-          resolve(null);
-        }
-      });
-    });
-  });
-}
-
-/**
- * Main domain lookup — tries RDAP first, then WHOIS, then DNS.
- * Returns availability + registration details in a single call.
+ * Main domain lookup — RDAP only.
+ * Returns availability + registration details.
  */
 export async function lookupDomain(
   domain: string
 ): Promise<DomainLookupResult> {
   const tld = domain.split('.').pop()!;
 
-  // Try RDAP (fast, standardized JSON)
   const rdapResult = await tryRdap(domain, tld);
   if (rdapResult) return rdapResult;
 
-  // Fallback to WHOIS (covers ccTLDs without RDAP)
-  const whoisResult = await tryWhois(domain);
-  if (whoisResult) return whoisResult;
-
-  // Last resort: DNS check (no registration details, just availability heuristic)
-  const dnsResult = await tryDns(domain);
-  if (dnsResult) return dnsResult;
-
-  // All methods failed
+  // No RDAP server found for this TLD
   return {
     domain,
     available: false,
     method: 'unknown',
     cached: false,
     details: emptyDetails(),
-    error: 'Không thể kiểm tra tên miền này. Vui lòng thử lại sau.',
+    error: 'TLD này chưa hỗ trợ kiểm tra qua RDAP. Vui lòng thử TLD khác.',
   };
 }
