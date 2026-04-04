@@ -8,14 +8,14 @@ import { DomainLookupResult } from '../types/domain.types';
 const RDAP_SERVERS: Record<string, string> = {
   com: 'https://rdap.verisign.com/com/v1',
   net: 'https://rdap.verisign.com/net/v1',
-  org: 'https://rdap.org/domain',
+  org: 'https://rdap.publicinterestregistry.org/rdap/domain',
   io: 'https://rdap.nic.io/domain',
   co: 'https://rdap.nic.co/domain',
   dev: 'https://rdap.nic.google/domain',
   app: 'https://rdap.nic.google/domain',
   uk: 'https://rdap.nominet.uk/uk/domain',
   fr: 'https://rdap.nic.fr/domain',
-  vn: 'https://rdap.vnnic.vn/domain',
+  // vn: VNNIC RDAP is unreliable — falls through to DNS-over-HTTPS
   ai: 'https://rdap.nic.ai/domain',
   me: 'https://rdap.nic.me/domain',
 };
@@ -171,7 +171,58 @@ async function tryRdap(
 }
 
 /**
- * Main domain lookup — RDAP only.
+ * DNS-over-HTTPS fallback — works on CF Workers.
+ * Checks if domain has NS records (registered) or NXDOMAIN (available).
+ * No registration details, just availability heuristic.
+ */
+async function tryDnsOverHttps(domain: string): Promise<DomainLookupResult | null> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=NS`,
+      {
+        headers: { Accept: 'application/dns-json' },
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timer);
+
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as { Status: number; Answer?: any[] };
+
+    // Status 3 = NXDOMAIN = domain doesn't exist = likely available
+    if (data.Status === 3) {
+      return {
+        domain,
+        available: true,
+        method: 'rdap' as const,
+        cached: false,
+        details: emptyDetails(),
+      };
+    }
+
+    // Has NS/answer records = domain is registered
+    if (data.Answer && data.Answer.length > 0) {
+      return {
+        domain,
+        available: false,
+        method: 'rdap' as const,
+        cached: false,
+        details: emptyDetails(),
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Main domain lookup — RDAP first, DNS-over-HTTPS fallback.
  * Returns availability + registration details.
  */
 export async function lookupDomain(
@@ -182,13 +233,17 @@ export async function lookupDomain(
   const rdapResult = await tryRdap(domain, tld);
   if (rdapResult) return rdapResult;
 
-  // No RDAP server found for this TLD
+  // Fallback: DNS-over-HTTPS (covers TLDs with broken/missing RDAP like .vn)
+  const dnsResult = await tryDnsOverHttps(domain);
+  if (dnsResult) return dnsResult;
+
+  // All methods failed
   return {
     domain,
     available: false,
     method: 'unknown',
     cached: false,
     details: emptyDetails(),
-    error: 'TLD này chưa hỗ trợ kiểm tra qua RDAP. Vui lòng thử TLD khác.',
+    error: 'Không thể kiểm tra tên miền này. Vui lòng thử lại sau.',
   };
 }
