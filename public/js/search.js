@@ -59,6 +59,7 @@
 
       results.classList.remove('hidden');
       renderAvailability(checkData);
+      saveHistory(domain, checkData.available);
 
       if (!checkData.available && checkData.details) {
         renderDetails(checkData.details);
@@ -296,4 +297,103 @@
     div.textContent = String(str);
     return div.innerHTML;
   }
+
+  // =============================================
+  // SEARCH HISTORY (localStorage)
+  // =============================================
+  var HISTORY_KEY = 'domainsoft_history';
+  var MAX_HISTORY = 20;
+  var historySection = document.getElementById('history');
+  var historyList = document.getElementById('history-list');
+  var clearHistoryBtn = document.getElementById('clear-history');
+
+  /** Save a search to localStorage history */
+  function saveHistory(domain, available) {
+    var history = loadHistory();
+    // Remove duplicate if exists
+    history = history.filter(function (h) { return h.domain !== domain; });
+    // Add to front
+    history.unshift({
+      domain: domain,
+      available: available,
+      timestamp: new Date().toISOString()
+    });
+    // Limit size
+    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (e) { /* localStorage full or unavailable */ }
+    renderHistory();
+  }
+
+  /** Load history from localStorage */
+  function loadHistory() {
+    try {
+      var data = localStorage.getItem(HISTORY_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /** Render history cards */
+  function renderHistory() {
+    if (!historySection || !historyList) return;
+    var history = loadHistory();
+    if (history.length === 0) {
+      historySection.classList.add('hidden');
+      return;
+    }
+    historySection.classList.remove('hidden');
+    historyList.innerHTML = history.map(function (h) {
+      var badgeClass = h.available ? 'available' : 'taken';
+      var badgeText = h.available ? 'Khả dụng' : 'Đã đăng ký';
+      var timeAgo = formatTimeAgo(h.timestamp);
+      return (
+        '<div class="history-item" data-domain="' + escapeHtml(h.domain) + '">' +
+          '<div class="history-info">' +
+            '<span class="history-domain">' + escapeHtml(h.domain) + '</span>' +
+            '<span class="history-time">' + timeAgo + '</span>' +
+          '</div>' +
+          '<span class="mini-badge ' + badgeClass + '">' + badgeText + '</span>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  /** Format relative time (e.g. "5 phút trước") */
+  function formatTimeAgo(iso) {
+    var seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (seconds < 60) return 'Vừa xong';
+    var minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + ' phút trước';
+    var hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + ' giờ trước';
+    var days = Math.floor(hours / 24);
+    return days + ' ngày trước';
+  }
+
+  // Click history item → search that domain
+  if (historyList) {
+    historyList.addEventListener('click', function (e) {
+      var item = e.target.closest('.history-item');
+      if (!item) return;
+      var domain = item.dataset.domain;
+      if (domain) {
+        input.value = domain;
+        form.dispatchEvent(new Event('submit'));
+      }
+    });
+  }
+
+  // Clear history button
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener('click', function () {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    });
+  }
+
+  // Render history on page load
+  renderHistory();
 })();

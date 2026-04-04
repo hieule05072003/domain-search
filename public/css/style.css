@@ -461,3 +461,28 @@ body {
   transform: scale(0.98);
 }
 .back-link .material-symbols-outlined { font-size: 1.1rem; }
+
+/* --- Search History --- */
+.history-section { max-width: 640px; margin: 1.5rem auto; }
+.history-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.75rem; padding: 0 0.25rem;
+}
+.history-header h3 { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; }
+.clear-history-btn {
+  background: none; border: none; color: var(--error); cursor: pointer;
+  font-size: 0.8rem; font-weight: 600; padding: 0.3rem 0.7rem;
+  border-radius: 12px; transition: all var(--t);
+}
+.clear-history-btn:hover { box-shadow: var(--inset); }
+.history-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 1rem; border-radius: 16px;
+  box-shadow: var(--raised); cursor: pointer;
+  transition: all var(--t);
+}
+.history-item:hover { box-shadow: var(--inset); transform: scale(0.99); }
+.history-info { display: flex; flex-direction: column; gap: 0.15rem; }
+.history-domain { font-weight: 600; font-size: 0.9rem; }
+.history-time { font-size: 0.75rem; color: var(--on-dim); }
