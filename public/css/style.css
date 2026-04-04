@@ -486,3 +486,35 @@ body {
 .history-info { display: flex; flex-direction: column; gap: 0.15rem; }
 .history-domain { font-weight: 600; font-size: 0.9rem; }
 .history-time { font-size: 0.75rem; color: var(--on-dim); }
+
+/* --- Auth (Google SSO) ------------------------------------- */
+.site-header { justify-content: space-between; align-items: center; }
+.auth-area { display: flex; align-items: center; gap: 0.75rem; }
+
+/* Login button — neumorphic raised, white bg, Google branding */
+.auth-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: #fff;
+  box-shadow: -4px -4px 8px #FFFFFF, 4px 4px 8px #A3B1C6;
+  border-radius: var(--r-pill);
+  padding: 0.45rem 1rem 0.45rem 0.7rem;
+  font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.82rem;
+  color: #3c4043; text-decoration: none;
+  transition: box-shadow var(--t), transform var(--t);
+  white-space: nowrap;
+}
+.auth-btn:hover { box-shadow: var(--inset); transform: scale(0.98); }
+.google-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* Logged-in state */
+.user-info { display: flex; align-items: center; gap: 0.45rem; }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--shadow-clr); }
+.user-name { font-size: 0.85rem; font-weight: 600; color: var(--on-surface); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-logout-link { font-size: 0.8rem; color: var(--secondary); font-weight: 500; text-decoration: none; transition: color var(--t); }
+.auth-logout-link:hover { color: var(--error); }
+
+@media (max-width: 480px) {
+  .user-name { display: none; }
+  .auth-btn { font-size: 0; padding: 0.5rem; border-radius: 50%; }
+  .auth-btn .google-icon { margin: 0; }
+}
