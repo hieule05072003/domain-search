@@ -3,4 +3,4 @@ dist/
 .env
 *.log
 coverage/
-functions/_worker.js
+public/_worker.js

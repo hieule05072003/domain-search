@@ -5,7 +5,7 @@
   "main": "functions/_worker.ts",
   "scripts": {
     "dev": "wrangler pages dev",
-    "build": "tsc --noEmit && npx esbuild functions/_worker.ts --bundle --outfile=functions/_worker.js --format=esm --platform=browser --external:node:* --external:cloudflare:*",
+    "build": "tsc --noEmit && npx esbuild functions/_worker.ts --bundle --outfile=public/_worker.js --format=esm --platform=browser --external:node:* --external:cloudflare:*",
     "deploy": "wrangler pages deploy public",
     "test": "jest",
     "lint": "tsc --noEmit"
