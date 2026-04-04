@@ -440,16 +440,24 @@ body {
 .contact-email:hover { color: var(--on-surface); }
 .contact-email .material-symbols-outlined { font-size: 1.1rem; }
 
-.back-link-wrap { text-align: center; padding: 0.5rem 0 1.5rem; }
+.back-link-wrap { text-align: center; padding: 1.5rem 0 2rem; }
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 24px;
+  box-shadow: var(--raised);
+  background: var(--surface);
   color: var(--secondary);
   font-weight: 500;
   font-size: 0.9rem;
   text-decoration: none;
   transition: color var(--t);
 }
-.back-link:hover { color: var(--primary); }
+.back-link:hover {
+  color: var(--primary);
+  box-shadow: var(--inset);
+  transform: scale(0.98);
+}
 .back-link .material-symbols-outlined { font-size: 1.1rem; }
