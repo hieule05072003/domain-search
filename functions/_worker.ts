@@ -90,4 +90,17 @@ app.get('/api/pricing', async (c) => {
   }
 });
 
+/* ── Fallback: serve static assets for non-API routes ── */
+app.all('*', async (c) => {
+  try {
+    const assets = (c.env as any).ASSETS;
+    if (assets) {
+      return assets.fetch(c.req.raw);
+    }
+    return c.notFound();
+  } catch {
+    return c.notFound();
+  }
+});
+
 export default app;
