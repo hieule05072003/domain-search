@@ -11,6 +11,9 @@ import passport from './middleware/auth-middleware';
 
 const app = express();
 
+// Trust proxy (Render runs behind a reverse proxy — needed for secure cookies + HTTPS detection)
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({ contentSecurityPolicy: false }));
 
